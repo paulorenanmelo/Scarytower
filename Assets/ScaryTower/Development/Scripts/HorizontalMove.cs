@@ -44,9 +44,9 @@ public class HorizontalMove : MonoBehaviour {
 		//left = 0; center = 1; right = 2;
 		actualPosition = 1;
 		tracksPosition = new Vector3[3];
-		tracksPosition [0] = Left_track.transform.position;
-		tracksPosition [1] = Center_track.transform.position;
-		tracksPosition [2] = Right_track.transform.position;
+		tracksPosition [0] = Left_track.transform.localPosition;
+		tracksPosition [1] = Center_track.transform.localPosition;
+		tracksPosition [2] = Right_track.transform.localPosition;
 	}
 	
 	// Update is called once per frame
@@ -125,32 +125,32 @@ public class HorizontalMove : MonoBehaviour {
 	}
 	
 	bool insideBoundaries () {
-		return insideBoundaries (transform.position.x);
+		return insideBoundaries (transform.localPosition.x);
 	}
 	
 	bool insideBoundaries(float x) {
-		if (x >= Left_track.transform.position.x &&
-		    x <= Right_track.transform.position.x) {
+		if (x >= Left_track.transform.localPosition.x &&
+		    x <= Right_track.transform.localPosition.x) {
 			return true;
 		}
 		return false;
 	}
 	
 	public void move(float x){
-		if (insideBoundaries(transform.position.x + (x*0.014f))) {
+		if (insideBoundaries(transform.localPosition.x + (x*0.014f))) {
 			transform.Translate(x*0.014f, 0, 0);
 		}
 	}
 	
 	public void searchTrack (){
 		//Compute current position of the elevator in two decimal places
-		float currentPosition = Mathf.Round (transform.position.x*100)*0.01f;
+		float currentPosition = Mathf.Round (transform.localPosition.x*100)*0.01f;
 		
 		//Set the correct track depending on its relative position to them
-		if (currentPosition >= Right_track.transform.position.x / 2) {//Right_track.transform.position / 2
+		if (currentPosition >= Right_track.transform.localPosition.x / 2) {//Right_track.transform.localPosition / 2
 			state = State.right; movementCaptured = true;
 		}
-		else if (currentPosition <= Left_track.transform.position.x / 2) {//Right_track.transform.position / 2
+		else if (currentPosition <= Left_track.transform.localPosition.x / 2) {//Right_track.transform.localPosition / 2
 			state = State.left; movementCaptured = true;
 		}
 		else {
@@ -168,14 +168,14 @@ public class HorizontalMove : MonoBehaviour {
 		//When movement is detected and it needs to move somewhere,
 		//Then it's either Right, Left, or Center
 			
-		Vector3 direction = tracksPosition[(int)state] - transform.position;
+		Vector3 direction = tracksPosition[(int)state] - transform.localPosition;
 		transform.Translate(direction*(Time.deltaTime*velocity),Space.World);
 		float distance = direction.magnitude;
 		if (distance <= snapDistance) {
 
-			transform.position = new Vector3(tracksPosition[actualPosition].x,
-			                                 transform.position.y,
-			                                 transform.position.z);
+			transform.localPosition = new Vector3(tracksPosition[actualPosition].x,
+			                                 transform.localPosition.y,
+			                                 transform.localPosition.z);
 			state = State.idle;
 			movementCaptured = false;
 		}

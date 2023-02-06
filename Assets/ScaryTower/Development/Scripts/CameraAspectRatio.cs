@@ -2,19 +2,33 @@
 using System.Collections;
 using System;
 
-public class CameraAspectRatio : MonoBehaviour {
+public class CameraAspectRatio : STMonoBehaviour
+{
+	[Serializable] public enum AlignmentModeTypes { alignWithTopEdge, alignWithBottomEdge, alignCentered }
 
-	public float adjustment = 2.54f;
+	private Camera cam;
+    [SerializeField] private float adjustment = 2.54f;
+	[SerializeField] private AlignmentModeTypes alignmentMode = AlignmentModeTypes.alignWithTopEdge;
 
-    // Use this for initialization
-    void Start () {
+
+    public float Adjustment { get => adjustment; set => adjustment = value; }
+    public AlignmentModeTypes AlignmentMode { get => alignmentMode; set => alignmentMode = value; }
+
+    public override void Init () {
 
 		string aspectRatio = findAspectRatio ();
 		resizeCamera (this.gameObject, aspectRatio);
-		//relocateCamera ();
+		relocateCamera ();
 	}
 
-	string findAspectRatio ()
+    public override void Tick()
+    {
+        string aspectRatio = findAspectRatio();
+        resizeCamera(this.gameObject, aspectRatio);
+        relocateCamera();
+    }
+
+    string findAspectRatio ()
 	{
 		//Compute aspect ratio from Screen dimensions
 		float aspRatio = (float)Screen.width / (float)Screen.height;
@@ -23,42 +37,35 @@ public class CameraAspectRatio : MonoBehaviour {
 		return aspRatio.ToString("F2");
 	}
 
-	void resizeCamera (GameObject cam, string aspRatio)
+	void resizeCamera (GameObject _cam, string aspRatio)
 	{
-		switch (aspRatio) {
-		//case "0.67": //HVGA 320x480 2:3 portrait
-		//	cam.GetComponent<Camera> ().orthographicSize = 3.83f;
-		//	break;
-		//case "0.60": //WVGA 480x800
-		//	cam.GetComponent<Camera> ().orthographicSize = 4.27f;
-		//	break;
-		//case "0.56": //FWVGA 480x854
-		//	cam.GetComponent<Camera> ().orthographicSize = 4.54f;
-		//	break;
-		//case "0.59": //WSVGA 600x1024
-		//	cam.GetComponent<Camera> ().orthographicSize = 4.355f;
-		//	break;
-		//case "0.63": //WXGA 800X1280 10:16 portrait
-		//	cam.GetComponent<Camera> ().orthographicSize = 4.09f;
-		//	break;
-
-		default:
-			cam.GetComponent<Camera> ().orthographicSize = 1f / (float)Convert.ToDecimal(aspRatio) * adjustment;
-			break;
+		if(aspRatio.Length > 0)
+		{
+			if(cam == null) cam = _cam.GetComponent<Camera>();
+            cam.orthographicSize = 1f / (float)Convert.ToDecimal(aspRatio) * adjustment;
 		}
 	}
 
-	void relocateCamera ()
+    /// <summary>
+    /// Y axis correction, if necessary so that the bg starts at Y = 0 downwards, and the character should offset accordingly
+    /// </summary>
+    void relocateCamera ()
 	{
-		//Y axis correction, if necessar
-		throw new System.NotImplementedException ();
+		var pos = cam.transform.position;
+		switch (alignmentMode)
+		{
+			case AlignmentModeTypes.alignWithTopEdge:
+                pos.y = -cam.orthographicSize;
+                break;
+			case AlignmentModeTypes.alignWithBottomEdge:
+                pos.y = cam.orthographicSize;
+                break;
+			case AlignmentModeTypes.alignCentered:
+			default:
+                // Camera is centered by default, but let's set it here in case this is changed in runtime
+				pos.y = 0;
+                break;
+		}
+		cam.transform.position = pos;
 	}
-	
-	// Update is called once per frame
-	void Update () {
-#if UNITY_EDITOR
-		string aspectRatio = findAspectRatio();
-        resizeCamera(this.gameObject, aspectRatio);
-#endif
-    }
 }
