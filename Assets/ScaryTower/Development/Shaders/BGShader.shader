@@ -3,9 +3,9 @@ Shader "Unlit/BGShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _PrevTex ("Previous Texture", 2D) = "white" {}
-        _CurrTex ("Current Texture", 2D) = "white" {}
-        _NextTex ("Next Texture", 2D) = "white" {}
+        [NoScaleOffset] _PrevTex ("Previous Texture", 2D) = "white" {}
+        [NoScaleOffset] _CurrTex ("Current Texture", 2D) = "white" {}
+        [NoScaleOffset] _NextTex ("Next Texture", 2D) = "white" {}
         // -1 displaying Previous Texture, 0 displaying Current Texture, 1 displaying Next Texture
         _CurrVal ("Current Value", Range(-1.0, 1.0)) = 0.0
     }
@@ -62,37 +62,34 @@ Shader "Unlit/BGShader"
             {
                 // sample the texture
                 fixed4 col;// = tex2D(_MainTex, i.uv);
-                fixed4 colPrevTex = fixed4(0, 0, 0, 0);// = tex2D(_PrevTex, i.uv);
-                fixed4 colCurrTex = fixed4(0, 0, 0, 0);// = tex2D(_CurrTex, i.uv);
-                fixed4 colNextTex = fixed4(0, 0, 0, 0);// = tex2D(_NextTex, i.uv);
+                fixed4 colPrevTex = fixed4(0, 0, 0, 0);// = tex2D(_PrevTex, i.uv); // let's sample later and default to black
+                fixed4 colCurrTex = fixed4(0, 0, 0, 0);// = tex2D(_CurrTex, i.uv); // let's sample later and default to black
+                fixed4 colNextTex = fixed4(0, 0, 0, 0);// = tex2D(_NextTex, i.uv); // let's sample later and default to black
 
-                fixed2 uv = i.uv;// - fixed2(0, _CurrVal * 0.5);
-                fixed2 uv2 = i.uv;// + fixed2(0, _CurrVal * 0.5);
-
-                //colPrevTex = tex2D(_PrevTex, i.uv);
-                //colCurrTex = tex2D(_CurrTex, i.uv);
-                //colNextTex = tex2D(_NextTex, i.uv);
+                fixed2 uv = i.uv;
+                fixed2 uv2 = i.uv;
+                float val = _CurrVal;
 
                 // assign the correct texture index or mix based on _CurrVal
-                if(_CurrVal < 0)
+                if(val < 0)
                 {
-                    uv.y -= _CurrVal + 1.0;
-                    uv2.y -= _CurrVal;
+                    uv.y -= val + 1.0;
+                    uv2.y -= val;
                     if(uv.y < 1 && uv.y > 0)   colPrevTex = tex2D(_PrevTex, uv);
                     if(uv2.y < 1 && uv2.y > 0) colCurrTex = tex2D(_CurrTex, uv2);
-                    //col = lerp(colPrevTex, colCurrTex, clamp (_CurrVal + 1, 0, 1));
+                    //col = lerp(colPrevTex, colCurrTex, clamp (val + 1, 0, 1));
                     col = colPrevTex + colCurrTex;
                 }
-                if(_CurrVal > 0)
+                if(val > 0)
                 {
-                    uv.y -= _CurrVal;
-                    uv2.y -= _CurrVal - 1.0;
+                    uv.y -= val;
+                    uv2.y -= val - 1.0;
                     if(uv.y < 1 && uv.y > 0)   colCurrTex = tex2D(_CurrTex, uv);
                     if(uv2.y < 1 && uv2.y > 0) colNextTex = tex2D(_NextTex, uv2);
-                    //col = lerp(colCurrTex, colNextTex, clamp (_CurrVal, 0, 1));
+                    //col = lerp(colCurrTex, colNextTex, clamp (val, 0, 1));
                     col = colCurrTex + colNextTex;
                 }
-                if(_CurrVal == 0)
+                if(val == 0)
                 {
                     colCurrTex = tex2D(_CurrTex, i.uv);
                     col = colCurrTex;
