@@ -3,18 +3,28 @@ using System.Collections;
 using UnityEngine.UI;
 using System;
 
+[Serializable]
+public class TexSet
+{
+    public Texture[] tex;
+}
+
 [RequireComponent(typeof(Renderer))]
 public class BgManager : MonoBehaviour {
 
     [SerializeField] private float offset = 0f;
     [SerializeField] private float speed = 1f;
-    [SerializeField] private Texture[] tex;
+    [SerializeField] private TexSet[] texSets;
     [SerializeField] private BgManager MasterValSource;
-    private float MasterVal => MasterValSource.currVal;
+    
+    private Texture[] tex;
+    private Texture tex1 { get => tex[0]; set { tex[0] = value; } }
+    private Texture tex2 { get => tex[1]; set { tex[1] = value; } }
+    private Texture tex3 { get => tex[2]; set { tex[2] = value; } }
 
-    private Texture tex1;
-    private Texture tex2;
-    private Texture tex3;
+    //private Texture tex1;
+    //private Texture tex2;
+    //private Texture tex3;
 
 	//Renderer rend;
 	Image img = null;
@@ -24,6 +34,7 @@ public class BgManager : MonoBehaviour {
     private bool swappedPrev = false;
     private bool swappedNext = false;
     
+    private float MasterVal => MasterValSource.currVal;
 
     void Start()
     {
@@ -37,6 +48,7 @@ public class BgManager : MonoBehaviour {
         currVal = 0;// offset;
         swappedPrev = false;
         swappedNext = false;
+        
         tex = new Texture[3] {
             mat.GetTexture("_PrevTex"),
             mat.GetTexture("_CurrTex"),
@@ -63,9 +75,12 @@ public class BgManager : MonoBehaviour {
         float ratio = ratioX < ratioY ? ratioX : ratioY;
 
         // now we can get the new height and width
-        float newHeight = tex[0].height * ratio;
-        float newWidth = tex[0].width * ratio;
-        mat.SetTextureScale("_MainTex", new Vector2(1f, 1f / ratio));
+        //float newHeight = tex[0].height * ratio;
+        //float newWidth = tex[0].width * ratio;
+        var texScale = mat.GetTextureScale("_MainTex");
+        float invertedRatio = texScale.x / ratio;
+        texScale.y = invertedRatio;
+        mat.SetTextureScale("_MainTex", texScale);
 
         //mpb.SetFloat("_CurrVal", currVal);
         //rend.SetPropertyBlock(mpb);
@@ -75,25 +90,37 @@ public class BgManager : MonoBehaviour {
         
         if(currVal >= 1f) // loop it to -1 when it reaches the end range 1
         {
+            // Example if it's 1.1, it spits out -0.9
             currVal = -1f + (currVal - 1f);
+            Debug.Log("[BgManager]: Loop CurrVal");
         }
-        else if (currVal < 0 && !swappedNext) // swap next before it gets to display it
+        else if (currVal < -1f)
+        {
+            // Example if it's -1.1, it spits out 0.9
+            currVal = 2f + currVal;
+            Debug.Log("[BgManager]: Loop negative CurrVal");
+        }
+        else if (currVal < 0 && currVal > -ratio && !swappedNext) // swap next before it gets to display it
         {
             // swap tex (prev/curr/next)
+            if (tex1 == null) return;
+
             mat.SetTexture("_NextTex", tex1);
 
-            //Debug.Log("Swap Next");
+            Debug.Log("[BgManager]: Swap Next");
             swappedNext = true;
             swappedPrev = false;
         }
-        else if (currVal >= 0f && !swappedPrev) // swap previous while it displaying next
+        else if (currVal > ratio && !swappedPrev) // swap previous while it displaying next
         {
             // swap tex (prev/curr/next)
             tex3 = mat.GetTexture("_NextTex");
+            //if (tex3 == null) return;
             tex1 = mat.GetTexture("_PrevTex");
+            //if(tex3.GetHashCode() != tex1.GetHashCode())
             mat.SetTexture("_PrevTex", tex3);
 
-            //Debug.Log("Swap Prev");
+            Debug.Log("[BgManager]: Swap Prev");
             swappedPrev = true;
             swappedNext = false;
         }

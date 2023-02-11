@@ -33,6 +33,7 @@ Shader "Unlit/BGShader"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
+                float2 rawUV : TEXCOORD1;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
             };
@@ -54,6 +55,7 @@ Shader "Unlit/BGShader"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.rawUV = v.uv;
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -66,8 +68,8 @@ Shader "Unlit/BGShader"
                 fixed4 colCurrTex = fixed4(0, 0, 0, 0);// = tex2D(_CurrTex, i.uv); // let's sample later and default to black
                 fixed4 colNextTex = fixed4(0, 0, 0, 0);// = tex2D(_NextTex, i.uv); // let's sample later and default to black
 
-                fixed2 uv = i.uv;
-                fixed2 uv2 = i.uv;
+                fixed2 uv = i.rawUV;
+                fixed2 uv2 = i.rawUV;
                 float val = _CurrVal;
 
                 // assign the correct texture index or mix based on _CurrVal
@@ -80,7 +82,7 @@ Shader "Unlit/BGShader"
                     //col = lerp(colPrevTex, colCurrTex, clamp (val + 1, 0, 1));
                     col = colPrevTex + colCurrTex;
                 }
-                if(val > 0)
+                if(val >= 0)
                 {
                     uv.y -= val;
                     uv2.y -= val - 1.0;
@@ -89,11 +91,11 @@ Shader "Unlit/BGShader"
                     //col = lerp(colCurrTex, colNextTex, clamp (val, 0, 1));
                     col = colCurrTex + colNextTex;
                 }
-                if(val == 0)
-                {
-                    colCurrTex = tex2D(_CurrTex, i.uv);
-                    col = colCurrTex;
-                }
+                //if(val == 0)
+                //{
+                //    colCurrTex = tex2D(_CurrTex, i.uv);
+                //    col = colCurrTex;
+                //}
 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
