@@ -28,6 +28,7 @@ Shader "Unlit/BGShader"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float2 rawUV : TEXCOORD1;
             };
 
             struct v2f
@@ -68,34 +69,38 @@ Shader "Unlit/BGShader"
                 fixed4 colCurrTex = fixed4(0, 0, 0, 0);// = tex2D(_CurrTex, i.uv); // let's sample later and default to black
                 fixed4 colNextTex = fixed4(0, 0, 0, 0);// = tex2D(_NextTex, i.uv); // let's sample later and default to black
 
-                fixed2 uv = i.rawUV;
-                fixed2 uv2 = i.rawUV;
+                float2 uv = i.uv;
+                float2 uv2 = i.uv;
                 float val = _CurrVal;
+                float scalingVal = _MainTex_ST.y - 1.0;
 
                 // assign the correct texture index or mix based on _CurrVal
-                if(val < 0)
+                if(val <= -1.0 + scalingVal)
                 {
                     uv.y -= val + 1.0;
                     uv2.y -= val;
                     if(uv.y < 1 && uv.y > 0)   colPrevTex = tex2D(_PrevTex, uv);
                     if(uv2.y < 1 && uv2.y > 0) colCurrTex = tex2D(_CurrTex, uv2);
-                    //col = lerp(colPrevTex, colCurrTex, clamp (val + 1, 0, 1));
-                    col = colPrevTex + colCurrTex;
+                    if(uv.y > 1.0) colNextTex = tex2D(_CurrTex, uv);
+                    col = colPrevTex + colCurrTex + colNextTex;
                 }
-                if(val >= 0)
+                else if(val < scalingVal)
+                {
+                    uv.y -= val + 1.0;
+                    uv2.y -= val;
+                    if(uv.y < 1 && uv.y > 0)   colPrevTex = tex2D(_PrevTex, uv);
+                    if(uv2.y < 1 && uv2.y > 0) colCurrTex = tex2D(_CurrTex, uv2);
+                    if(uv2.y > - scalingVal && uv2.y < 0) colNextTex = tex2D(_NextTex, uv2);
+                    col = colPrevTex + colCurrTex + colNextTex;
+                }
+                else// if(val >= scalingVal)
                 {
                     uv.y -= val;
                     uv2.y -= val - 1.0;
                     if(uv.y < 1 && uv.y > 0)   colCurrTex = tex2D(_CurrTex, uv);
                     if(uv2.y < 1 && uv2.y > 0) colNextTex = tex2D(_NextTex, uv2);
-                    //col = lerp(colCurrTex, colNextTex, clamp (val, 0, 1));
                     col = colCurrTex + colNextTex;
                 }
-                //if(val == 0)
-                //{
-                //    colCurrTex = tex2D(_CurrTex, i.uv);
-                //    col = colCurrTex;
-                //}
 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);

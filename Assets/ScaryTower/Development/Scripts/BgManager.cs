@@ -15,7 +15,7 @@ public class BgManager : MonoBehaviour {
 
     [SerializeField] private float offset = 0f;
     [SerializeField] private TexSet[] texSets;
-    [SerializeField] private BgManager MasterValSource;
+    //[SerializeField] private BgManager MasterValSource;
     [SerializeField] int texSet = 0;
     [SerializeField] int texID = 0;
     [SerializeField] int loopsBeforeChangingID = 3;
