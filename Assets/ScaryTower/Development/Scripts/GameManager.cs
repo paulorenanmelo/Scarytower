@@ -5,6 +5,7 @@ using System.Diagnostics.Contracts;
 using Unity.Profiling;
 using UnityEditorInternal.VersionControl;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,10 +19,16 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // todo: load info using a neat boostrap plugin or equivalent
-        cameraAspectRatio.Init();
         logType = Debug.unityLogger.filterLogType;
         Debug.unityLogger.filterLogType = GameConfigManager.Instance.gameSettings.logType;
+        
+        // todo: load info using a neat boostrap plugin or equivalent
+        
+        cameraAspectRatio.Init();
+        //setPlayerPosFromCameraAspectRatio.Init();
+        player.Init();
+        bgManager.Init();
+        //horizontalMove.Init();
     }
 
     // Update is called once per frame
@@ -34,35 +41,11 @@ public class GameManager : MonoBehaviour
     {
         // restore logtype set in the editor
         Debug.unityLogger.filterLogType = logType;
-    }
-}
 
-/// <summary>
-/// This is a mono behaviour managed by <see cref="GameManager"/>. ST = Scary Tower
-/// </summary>
-public abstract class STMonoBehaviour : MonoBehaviour
-{
-    /// <summary>
-    /// Use this instead of Start so it can be called in the correct order of execution by <see cref="GameManager"/>. ST = Scary Tower
-    /// </summary>
-    public virtual void Init()
-    {
-
-    }
-
-    /// <summary>
-    /// Use this instead of Update so it can be called in the correct order of execution by <see cref="GameManager"/>. ST = Scary Tower
-    /// </summary>
-    public virtual void Tick()
-    {
-
-    }
-
-    /// <summary>
-    /// Use this instead of OnDestroy so it can be called in the correct order of execution by <see cref="GameManager"/>. ST = Scary Tower
-    /// </summary>
-    public virtual void Discard()
-    {
-
+        cameraAspectRatio.Discard();
+        //setPlayerPosFromCameraAspectRatio.Discard();
+        player.Discard();
+        bgManager.Discard();
+        //horizontalMove.Discard();
     }
 }

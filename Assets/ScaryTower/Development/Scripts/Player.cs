@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Player : MonoBehaviour {
+public class Player : STMonoBehaviour {
 
 	private PlayerScript player;
 	
@@ -9,7 +9,9 @@ public class Player : MonoBehaviour {
 	public Elevator.Type elevator;
 
 	// Use this for initialization
-	void Start () {
+	public override void Init () {
+		base.Init();
+
 		player = new PlayerScript ();
 		
 		//assign which character/elevator is selected
@@ -25,10 +27,5 @@ public class Player : MonoBehaviour {
 	{
 		GetComponentInChildren<Animator> ().runtimeAnimatorController =
 			Resources.Load<RuntimeAnimatorController> ("Controllers/"+player.imgFileName);
-	}
-
-	// Update is called once per frame
-	void Update () {
-
 	}
 }

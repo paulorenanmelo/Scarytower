@@ -7,6 +7,7 @@ public class CameraAspectRatio : STMonoBehaviour
 	[Serializable] public enum AlignmentModeTypes { alignWithTopEdge, alignWithBottomEdge, alignCentered }
 
 	private Camera cam;
+	private string aspectRatio;
     [SerializeField] private float adjustment = 2.54f;
 	[SerializeField] private AlignmentModeTypes alignmentMode = AlignmentModeTypes.alignWithTopEdge;
 
@@ -16,16 +17,23 @@ public class CameraAspectRatio : STMonoBehaviour
 
     public override void Init () {
 
-		string aspectRatio = findAspectRatio ();
-		resizeCamera (this.gameObject, aspectRatio);
-		relocateCamera ();
-	}
+		base.Init();
+        string _aspectRatio = findAspectRatio();
+        if (_aspectRatio == aspectRatio) return;
+        aspectRatio = _aspectRatio;
+        resizeCamera(this.gameObject, aspectRatio);
+        relocateCamera();
+    }
 
     public override void Tick()
     {
-        string aspectRatio = findAspectRatio();
+        string _aspectRatio = findAspectRatio();
+        if (_aspectRatio == aspectRatio) return;
+		aspectRatio = _aspectRatio;
         resizeCamera(this.gameObject, aspectRatio);
         relocateCamera();
+        if (verbose) Debug.Log("[CameraAspectRatio]: changed to " + aspectRatio);
+		aspectRatioChanged.Invoke();
     }
 
     string findAspectRatio ()

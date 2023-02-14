@@ -3,9 +3,10 @@ Shader "Unlit/BGShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        [NoScaleOffset] _PrevTex ("Previous Texture", 2D) = "white" {}
-        [NoScaleOffset] _CurrTex ("Current Texture", 2D) = "white" {}
-        [NoScaleOffset] _NextTex ("Next Texture", 2D) = "white" {}
+        [NoScaleOffset] _PrevTex ("Previous Texture", 2D) = "black" {}
+        [NoScaleOffset] _CurrTex ("Current Texture", 2D) = "black" {}
+        [NoScaleOffset] _CurrTexOld ("Current Texture Old", 2D) = "black" {}
+        [NoScaleOffset] _NextTex ("Next Texture", 2D) = "black" {}
         // -1 displaying Previous Texture, 0 displaying Current Texture, 1 displaying Next Texture
         _CurrVal ("Current Value", Range(-1.0, 1.0)) = 0.0
     }
@@ -44,6 +45,8 @@ Shader "Unlit/BGShader"
             
             sampler2D _PrevTex;
             float4 _PrevTex_ST;
+            sampler2D _CurrTexOld;
+            float4 _CurrTexOld_ST;
             sampler2D _CurrTex;
             float4 _CurrTex_ST;
             sampler2D _NextTex;
@@ -81,7 +84,7 @@ Shader "Unlit/BGShader"
                     uv2.y -= val;
                     if(uv.y < 1 && uv.y > 0)   colPrevTex = tex2D(_PrevTex, uv);
                     if(uv2.y < 1 && uv2.y > 0) colCurrTex = tex2D(_CurrTex, uv2);
-                    if(uv.y > 1.0) colNextTex = tex2D(_CurrTex, uv);
+                    if(uv.y > 1.0) colNextTex = tex2D(_CurrTexOld, uv);
                     col = colPrevTex + colCurrTex + colNextTex;
                 }
                 else if(val < scalingVal)
