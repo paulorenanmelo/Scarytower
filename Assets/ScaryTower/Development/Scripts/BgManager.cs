@@ -27,11 +27,14 @@ public class BgManager : STMonoBehaviour {
 
     private Image img = null;
 	private Material mat = null;
-    
-    [Range(-1f, 1f)] private float currVal = 0;
+
+    private const float currValMin = -1f;
+    private const float currValMax = 2f;
+    [Range(currValMin, currValMax)] private float currVal = 0;
     private float w = 0;
     private float h = 0;
     private float ratio = 1;
+    private float invertedRatio = 1;
     private bool swappedPrev = false;
     private bool swappedNext = false;
     private int loopCount = 0;
@@ -56,8 +59,9 @@ public class BgManager : STMonoBehaviour {
         swappedPrev = false;
         swappedNext = false;
         loopCount = 0;
-        currVal = -1;// shader texture sampling offset from -1 to 1;
+        currVal = currValMin;// shader texture sampling offset from -1 to 2;
 
+        AspectRatioChanged();
         mat.SetFloat("_CurrVal", currVal);
         tex1 = mat.GetTexture("_PrevTex");
         tex2 = mat.GetTexture("_CurrTex");
@@ -69,34 +73,52 @@ public class BgManager : STMonoBehaviour {
         switch (GetStatusUpdate())
         {
             case StatusUpdate.Loop_Positive:
-                // Example if it's 1.1, it spits out -0.9
-                currVal = -1f + (currVal - 1f);
+                // Example if it's 2.1, it spits out -0.9,
+                // because it was 0.1 beyond the max value
+                currVal = currValMin + (currVal - currValMax);
+
+                if (verbose) Debug.Log("[BgManager]: Loop CurrVal");
                 Loop();
 
                 // swap tex (prev/CURR/next)
-                if (verbose) Debug.Log("[BgManager]: Loop CurrVal");
                 mat.SetTexture("_CurrTex", Tex2);
+                swappedPrev = false;
+                swappedNext = false;
                 break;
             case StatusUpdate.Loop_Negative:
-                // Example if it's -1.1, it spits out 0.9
-                currVal = 1f - currVal;
+                // Example if it's -1.1, it spits out 0.9,
+                // because it was 0.1 below the min value
+                currVal = currValMax - currVal;
+
+                if (verbose) Debug.Log("[BgManager]: Loop negative CurrVal");
                 Loop();
 
                 // swap tex (prev/CURR/next)
-                if (verbose) Debug.Log("[BgManager]: Loop negative CurrVal");
                 mat.SetTexture("_CurrTex", Tex2);
+                swappedPrev = false;
+                swappedNext = false;
                 break;
             case StatusUpdate.SwapNext:
+                if (verbose) Debug.Log("[BgManager]: Swap Next");
+
                 // swap tex (prev/curr/NEXT)
+                mat.SetTexture("_NextTex", Tex3);
+                swappedNext = true;
+                return;
 
                 mat.SetTexture("_NextTex", tex1);
 
-                if (verbose) Debug.Log("[BgManager]: Swap Next");
                 swappedNext = true;
                 swappedPrev = false;
                 break;
             case StatusUpdate.SwapPrevious:
+                if (verbose) Debug.Log("[BgManager]: Swap Prev");
+
                 // swap tex (PREV/curr/next)
+                mat.SetTexture("_PrevTex", Tex1);
+                swappedPrev = true;
+                return;
+
                 tex3 = mat.GetTexture("_NextTex");
                 tex1 = mat.GetTexture("_PrevTex");
 
@@ -128,7 +150,6 @@ public class BgManager : STMonoBehaviour {
                     mat.SetTexture("_CurrTexOld", Tex2);
                 }
 
-                if (verbose) Debug.Log("[BgManager]: Swap Prev");
                 swappedPrev = true;
                 swappedNext = false;
                 break;
@@ -141,9 +162,18 @@ public class BgManager : STMonoBehaviour {
     /// <summary>
     /// value looping between -1 and 1 that starts at zero and goes up (or down, if speed is negative!)
     /// </summary>
-    float GetCurrVal()
+    void UpdateCurrVal()
     {
-        return currVal + Time.deltaTime * speed;
+        currVal += Time.deltaTime * speed;
+        // temporary while we test without updating textures
+        //if (currVal > currValMax)
+        //{
+        //    currVal = currValMin;
+        //}
+        //else if (currVal < currValMin)
+        //{
+        //    currVal = currValMax;
+        //}
     }
 
     void Loop()
@@ -172,19 +202,23 @@ public class BgManager : STMonoBehaviour {
 
     StatusUpdate GetStatusUpdate()
     {
-        if (currVal > 1f) // loop it to -1 when it reaches the end range 1
+        // loop it to -1 when it reaches the end range 1
+        if (currVal > currValMax)
         {
             return StatusUpdate.Loop_Positive;
         }
-        else if (currVal < -1f) // loop it to 1 when it reaches the end range -1
+        // loop it to 1 when it reaches the end range -1
+        else if (currVal < currValMin)
         {
             return StatusUpdate.Loop_Negative;
         }
-        else if (currVal < 0 && currVal > -ratio && !swappedNext) // swap next before it gets to display it
+        // swap next before it gets to display it
+        else if (currVal > currValMin + ((invertedRatio - 1f) * 1f) && currVal < 0 && !swappedNext)
         {
             return StatusUpdate.SwapNext;
         }
-        else if (currVal > ratio && !swappedPrev) // swap previous while it displaying next
+        // swap previous while it displaying next
+        else if (currVal > ((invertedRatio - 1f) * 1f) && currVal < 1f && !swappedPrev)
         {
             return StatusUpdate.SwapPrevious;
         }
@@ -204,7 +238,7 @@ public class BgManager : STMonoBehaviour {
 
         // set texture tiling to compensate for aspect ratio of the screen (it's a full-screen image)
         var texScale = mat.GetTextureScale("_MainTex");
-        float invertedRatio = texScale.x / ratio;
+        invertedRatio = texScale.x / ratio;
         texScale.y = invertedRatio;
         mat.SetTextureScale("_MainTex", texScale);
     }
@@ -213,8 +247,8 @@ public class BgManager : STMonoBehaviour {
         // set value from previous update loop
         mat.SetFloat("_CurrVal", currVal);
 
-        currVal = GetCurrVal();
+        UpdateCurrVal();
 
         UpdateTextures();
-	}
+    }
 }
