@@ -2,7 +2,6 @@
 using System.Collections;
 using UnityEngine.UI;
 using System;
-using static UnityEditor.MaterialProperty;
 
 [Serializable]
 public class TexSet
@@ -20,10 +19,6 @@ public class BgManager : STMonoBehaviour {
     [SerializeField] int texID = 0;
     [SerializeField] int loopsBeforeChangingID = 3;
     [SerializeField] bool randomize = true;
-
-    private Texture tex1;
-    private Texture tex2;
-    private Texture tex3;
 
     private Image img = null;
 	private Material mat = null;
@@ -63,9 +58,6 @@ public class BgManager : STMonoBehaviour {
 
         AspectRatioChanged();
         mat.SetFloat("_CurrVal", currVal);
-        tex1 = mat.GetTexture("_PrevTex");
-        tex2 = mat.GetTexture("_CurrTex");
-        tex3 = mat.GetTexture("_NextTex");
     }
 
     void UpdateTextures()
@@ -104,12 +96,6 @@ public class BgManager : STMonoBehaviour {
                 // swap tex (prev/curr/NEXT)
                 mat.SetTexture("_NextTex", Tex3);
                 swappedNext = true;
-                return;
-
-                mat.SetTexture("_NextTex", tex1);
-
-                swappedNext = true;
-                swappedPrev = false;
                 break;
             case StatusUpdate.SwapPrevious:
                 if (verbose) Debug.Log("[BgManager]: Swap Prev");
@@ -117,41 +103,6 @@ public class BgManager : STMonoBehaviour {
                 // swap tex (PREV/curr/next)
                 mat.SetTexture("_PrevTex", Tex1);
                 swappedPrev = true;
-                return;
-
-                tex3 = mat.GetTexture("_NextTex");
-                tex1 = mat.GetTexture("_PrevTex");
-
-                if (tex1 != Tex1 && tex1 != Tex3)
-                {
-                    tex1 = Tex1;
-                    if (verbose) Debug.Log("[BgManager]: TEX1");
-                }
-                else if (tex3 != Tex1 && tex3 != Tex3)
-                {
-                    tex1 = Tex3;
-                    if (verbose) Debug.Log("[BgManager]: TEX3");
-                }
-                else if (tex1 == tex3)
-                {
-                    if (tex1 == Tex3)
-                        tex1 = Tex1;
-                    else
-                        tex1 = Tex3;
-                    if (verbose) Debug.Log("[BgManager]: TEX3 fallback");
-                }
-
-                mat.SetTexture("_PrevTex", tex3);
-
-                // update old tex while it's not being displayed
-                if (Tex2 == mat.GetTexture("_CurrTex"))
-                {
-                    if (verbose) Debug.Log("[BgManager]: Replaced old tex");
-                    mat.SetTexture("_CurrTexOld", Tex2);
-                }
-
-                swappedPrev = true;
-                swappedNext = false;
                 break;
             case StatusUpdate.Idle:
             default:
