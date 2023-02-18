@@ -9,3 +9,12 @@ public static class FloatUtils
         return low2 + (value - low1) * (high2 - low2) / (high1 - low1);
     }
 }
+
+public static class Vector2Utils
+{
+    public static Vector3 ScreenToWorld(Camera cam, Vector3 pos)
+    {
+        pos.z = cam.nearClipPlane;
+        return cam.ScreenToWorldPoint(pos);
+    }
+}

@@ -26,11 +26,12 @@ public class HorizontalMove : MonoBehaviour {
 	public State state;
 
 	private int mouseButton = 0;
+    private Vector2 startPos;
+    private Vector2 endPos;
+    private float startTime;
+    private float endTime;
 
-//	private Touch initialTouch, intermedTouch, finalTouch;
-	private float initialTime;//, intermedTime, finalTime;
-//	public float timeLimit1, timeLimit2, displacementLimit1, displacementLimit2;
-	private float displacement;
+	private float minDragToChangeTrack => GameConfigManager.Instance.gameSettings.minDragToChangeTrack;
 	private float snapDistance => GameConfigManager.Instance.gameSettings.snapDistance;
 	private float leftRemap => Left_track.transform.localPosition.x * 2f;
 	private float rightRemap => Right_track.transform.localPosition.x * 2f;
@@ -52,46 +53,50 @@ public class HorizontalMove : MonoBehaviour {
 		tracksPosition [1] = Center_track.transform.localPosition;
 		tracksPosition [2] = Right_track.transform.localPosition;
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		captureInput();
+
+    private void OnEnable()
+    {
+        InputManager.Instance.OnStartTouch += OnStartTouch;
+        InputManager.Instance.OnEndTouch += OnEndTouch;
+    }
+
+    private void OnDisable()
+    {
+        InputManager.Instance.OnStartTouch -= OnStartTouch;
+        InputManager.Instance.OnEndTouch -= OnEndTouch;
+    }
+    
+	private void OnStartTouch(Vector2 pos, float time)
+    {
+        startPos = pos;
+        startTime = time;
+		movementCaptured = false;
+    }
+    private void OnEndTouch(Vector2 pos, float time)
+    {
+        endPos = pos;
+        endTime = time;
+
+        searchTrack();
+
+        startTime = 0;
+    }
+
+    // Update is called once per frame
+    void Update () {
 		if (movementCaptured) {
 			moveToTrackFound ();
 		}
+		else if (startTime != 0)
+		{
+			captureInput();
+        }
 	}
 
 	public void captureInput(){
-		if (!movementCaptured || bPositionCanChange) {
-			if (Input.touchCount > 0) {
-				Touch t = Input.GetTouch(0);
-				switch (t.phase) {
-				case TouchPhase.Began:
-	//				initialTouch = t;
-					initialTime = Time.time;
-					break;
-				case TouchPhase.Moved:
-					float x = Remap(t.deltaPosition.x, 0, Screen.width, leftRemap, rightRemap);
-					displacement+= x;
-					move (x);
-					break;
-				case TouchPhase.Canceled:
-				case TouchPhase.Ended:
-					searchTrack();
-					displacement = 0;
-					initialTime = 0;
-					break;
-				default:
-					if (initialTime != 0) {
-						searchTrack();
-						displacement = 0;
-						initialTime = 0;
-					}
-					break;
-				}
-			}
-		}
-		captureInputPC ();
+        var pos = InputManager.Instance.PrimaryPosition() - startPos;
+        shift(pos.x);
+        captureInputPC ();
 	}
 
 	void captureInputPC ()
@@ -117,44 +122,7 @@ public class HorizontalMove : MonoBehaviour {
 					movementCaptured = true;
 				}
 			}
-
-            if (Input.mousePresent)
-            {
-                if (Input.GetMouseButtonDown(mouseButton))
-                {
-                    initialTime = Time.time;
-                    displacement = Remap(Input.mousePosition.x, 0, Screen.width, leftRemap, rightRemap);
-                }
-                else if (Input.GetMouseButtonUp(mouseButton))
-                {
-                    searchTrack();
-                    displacement = 0;
-                    initialTime = 0;
-                }
-                else if (Input.GetMouseButton(mouseButton))
-                {
-					float x = Remap(Input.mousePosition.x, 0, Screen.width, leftRemap, rightRemap);// - displacement;
-					//x *= 0.1f;
-                    displacement += x - displacement; // do we need this?
-                    move(x, false);
-                }
-				else if (initialTime != 0)
-				{
-                    searchTrack();
-                    displacement = 0;
-                    initialTime = 0;
-                }
-            }
         }
-	}
-	
-	bool finishMovement ()
-	{
-		//return true if	Time limit is exceeded, displacement limit is exceeded
-		/*if (Time.time - initialTime > timeLimit1) {
-			return true;
-		}*/
-		return false;
 	}
 	
 	bool insideBoundaries () {
@@ -169,39 +137,31 @@ public class HorizontalMove : MonoBehaviour {
 		return false;
 	}
 
-	//public void moveTo(float x) {
-	//	Vector3 pos = transform.localPosition;
-	//	pos.x = x;
-	//	if (insideBoundaries(pos.x)) {
-	//		transform.localPosition = pos;
-	//	}
-	//}
-	public void move(float x, bool useDeltatime = true){
-		float dt = Time.deltaTime;
-		if (useDeltatime) {
-			if (insideBoundaries(transform.localPosition.x + (x*dt))) {
-				transform.Translate(x*dt, 0, 0);
-			}
-		}
-		else {
-			if (insideBoundaries(x)) {
-				var pos = transform.localPosition;
-				pos.x = x;
-				transform.localPosition = pos;
-			}
+	public void shift(float x)
+	{
+		Vector3 pos = tracksPosition[actualPosition];
+		pos.x += x;
+		if (insideBoundaries(pos.x))
+		{
+			transform.localPosition = pos;
 		}
 	}
-	
+
 	public void searchTrack (){
 		//Compute current position of the elevator in two decimal places
 		float currentPosition = Mathf.Round (transform.localPosition.x*100f)*0.01f;
 		
 		//Set the correct track depending on its relative position to them
-		if (currentPosition >= Right_track.transform.localPosition.x / 2) {//Right_track.transform.localPosition / 2
+		if (currentPosition >= Right_track.transform.localPosition.x / 2 && (endPos - startPos).x >= minDragToChangeTrack
+            || (actualPosition == 1 && (endPos - startPos).x >= minDragToChangeTrack)
+            ) {//Right_track.transform.localPosition / 2
 			state = State.right;
 			movementCaptured = true;
 		}
-		else if (currentPosition <= Left_track.transform.localPosition.x / 2) {//Right_track.transform.localPosition / 2
+		else if (currentPosition <= Left_track.transform.localPosition.x / 2 && (endPos - startPos).x <= -minDragToChangeTrack
+            || (actualPosition == 1 && (endPos - startPos).x <= -minDragToChangeTrack)
+            )
+        {//Left_track.transform.localPosition / 2
             state = State.left;
 			movementCaptured = true;
 		}
@@ -209,10 +169,6 @@ public class HorizontalMove : MonoBehaviour {
             state = State.center;
 			movementCaptured = true;
 		}
-	}
-	
-	void moveToTrackFound (float displacement){
-		//if displacement is positive, direction is right, otherwise is left?
 	}
 	
 	void moveToTrackFound ()

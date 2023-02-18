@@ -6,6 +6,7 @@ public class STSettings
 {
     public float startingSpeed = 0.5f;
     public float snapDistance = 0.0333f;
+    public float minDragToChangeTrack = 0.0333f;
     public LogType logType = LogType.Log;
     public bool logVerbose = false;
 }
