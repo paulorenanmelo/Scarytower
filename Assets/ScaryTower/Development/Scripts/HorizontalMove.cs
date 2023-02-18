@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using static FloatUtils;
 
 public class HorizontalMove : MonoBehaviour {
 
@@ -16,7 +17,6 @@ public class HorizontalMove : MonoBehaviour {
 	public GameObject Right_track;
 	
 	//move method
-	private const float snapDistance = 0.0333f;
 	
 	//speed for going right/left after player's input
 	public float velocity;
@@ -25,12 +25,16 @@ public class HorizontalMove : MonoBehaviour {
 	public enum State{left = 0, center = 1, right = 2, idle = -1};
 	public State state;
 
+	private int mouseButton = 0;
+
 //	private Touch initialTouch, intermedTouch, finalTouch;
 	private float initialTime;//, intermedTime, finalTime;
 //	public float timeLimit1, timeLimit2, displacementLimit1, displacementLimit2;
 	private float displacement;
+	private float snapDistance => GameConfigManager.Instance.gameSettings.snapDistance;
+	private float leftRemap => Left_track.transform.localPosition.x * 2f;
+	private float rightRemap => Right_track.transform.localPosition.x * 2f;
 
-	// Use this for initialization
 	void Start () {
 		//how much you need to drag your finger to be a valid movement
 //		touchShift = (Screen.width*0.01f)*4.0f;//8.0f;//MainScript.scaleScreenPercentage(125.0f);
@@ -67,21 +71,22 @@ public class HorizontalMove : MonoBehaviour {
 					initialTime = Time.time;
 					break;
 				case TouchPhase.Moved:
-					float x = t.deltaPosition.x;
+					float x = Remap(t.deltaPosition.x, 0, Screen.width, leftRemap, rightRemap);
 					displacement+= x;
-					move (t.deltaPosition.x);
+					move (x);
 					break;
 				case TouchPhase.Canceled:
-					searchTrack();
-					displacement = 0;
-					initialTime = 0;
-					break;
 				case TouchPhase.Ended:
 					searchTrack();
-					initialTime = 0;
 					displacement = 0;
+					initialTime = 0;
 					break;
 				default:
+					if (initialTime != 0) {
+						searchTrack();
+						displacement = 0;
+						initialTime = 0;
+					}
 					break;
 				}
 			}
@@ -112,7 +117,35 @@ public class HorizontalMove : MonoBehaviour {
 					movementCaptured = true;
 				}
 			}
-		}
+
+            if (Input.mousePresent)
+            {
+                if (Input.GetMouseButtonDown(mouseButton))
+                {
+                    initialTime = Time.time;
+                    displacement = Remap(Input.mousePosition.x, 0, Screen.width, leftRemap, rightRemap);
+                }
+                else if (Input.GetMouseButtonUp(mouseButton))
+                {
+                    searchTrack();
+                    displacement = 0;
+                    initialTime = 0;
+                }
+                else if (Input.GetMouseButton(mouseButton))
+                {
+					float x = Remap(Input.mousePosition.x, 0, Screen.width, leftRemap, rightRemap);// - displacement;
+					//x *= 0.1f;
+                    displacement += x - displacement; // do we need this?
+                    move(x, false);
+                }
+				else if (initialTime != 0)
+				{
+                    searchTrack();
+                    displacement = 0;
+                    initialTime = 0;
+                }
+            }
+        }
 	}
 	
 	bool finishMovement ()
@@ -135,26 +168,46 @@ public class HorizontalMove : MonoBehaviour {
 		}
 		return false;
 	}
-	
-	public void move(float x){
-		if (insideBoundaries(transform.localPosition.x + (x*0.014f))) {
-			transform.Translate(x*0.014f, 0, 0);
+
+	//public void moveTo(float x) {
+	//	Vector3 pos = transform.localPosition;
+	//	pos.x = x;
+	//	if (insideBoundaries(pos.x)) {
+	//		transform.localPosition = pos;
+	//	}
+	//}
+	public void move(float x, bool useDeltatime = true){
+		float dt = Time.deltaTime;
+		if (useDeltatime) {
+			if (insideBoundaries(transform.localPosition.x + (x*dt))) {
+				transform.Translate(x*dt, 0, 0);
+			}
+		}
+		else {
+			if (insideBoundaries(x)) {
+				var pos = transform.localPosition;
+				pos.x = x;
+				transform.localPosition = pos;
+			}
 		}
 	}
 	
 	public void searchTrack (){
 		//Compute current position of the elevator in two decimal places
-		float currentPosition = Mathf.Round (transform.localPosition.x*100)*0.01f;
+		float currentPosition = Mathf.Round (transform.localPosition.x*100f)*0.01f;
 		
 		//Set the correct track depending on its relative position to them
 		if (currentPosition >= Right_track.transform.localPosition.x / 2) {//Right_track.transform.localPosition / 2
-			state = State.right; movementCaptured = true;
+			state = State.right;
+			movementCaptured = true;
 		}
 		else if (currentPosition <= Left_track.transform.localPosition.x / 2) {//Right_track.transform.localPosition / 2
-			state = State.left; movementCaptured = true;
+            state = State.left;
+			movementCaptured = true;
 		}
 		else {
-			state = State.center; movementCaptured = true;
+            state = State.center;
+			movementCaptured = true;
 		}
 	}
 	

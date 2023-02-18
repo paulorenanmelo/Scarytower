@@ -40,6 +40,7 @@ public class BgManager : STMonoBehaviour {
     private Texture Tex1 { get => texSets[texSet].tex[texID + 0]; set { texSets[texSet].tex[texID + 0] = value; } }
     private Texture Tex2 { get => texSets[texSet].tex[texID + 1]; set { texSets[texSet].tex[texID + 1] = value; } }
     private Texture Tex3 { get => texSets[texSet].tex[texID + 2]; set { texSets[texSet].tex[texID + 2] = value; } }
+    protected new bool verbose => false; // comment this to fallback to default value from STMonobehaviour which comes from GameConfigManager
 
     public override void Init()
     {
@@ -178,14 +179,16 @@ public class BgManager : STMonoBehaviour {
 
     public override void AspectRatioChanged()
     {
+        Screen.orientation = ScreenOrientation.Portrait;
         float ratioX = Screen.width / w;
         float ratioY = Screen.height / h;
+        
+        // difference between ratio of the screen and ratio of the background image
+        // this is multiplied by a factor that approximates the best visual outcome
+        // perhaps could be improved to remove this magical number
+        ratio = ((float)Screen.width / Screen.height) / (w / h) * 0.88375f;
 
-        // use whichever multiplier is smaller
-        //float ratio = ratioX < ratioY ? ratioX : ratioY;
-        // use horizontal ratio
-        ratio = ratioX;
-        Debug.Log("[AspectRatioChanged]: ratio = " + ratio);
+        Debug.Log("[AspectRatioChanged]: ratio = " + ratio + ", width = " + Screen.width + ", height = " + Screen.height);
 
         // set texture tiling to compensate for aspect ratio of the screen (it's a full-screen image)
         var texScale = mat.GetTextureScale("_MainTex");
