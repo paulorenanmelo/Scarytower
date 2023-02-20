@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,6 +14,9 @@ public class InputManager : Singleton<InputManager>
 
     private PlayerControls playerControls;
     private Camera cam;
+    private bool primaryTouching = false;
+    private InputActionPhase[] normalActions = new InputActionPhase[] { InputActionPhase.Started, InputActionPhase.Waiting, InputActionPhase.Performed };
+    private bool verbose => GameConfigManager.Instance.gameSettings.logVerbose;
 
     public override void Awake()
     {
@@ -27,12 +31,20 @@ public class InputManager : Singleton<InputManager>
         playerControls.Touch.PrimaryContact.performed += PerformedPrimaryTouch;
     }
 
+    private void Update()
+    {
+        if (primaryTouching)
+        {
+            if (normalActions.Contains(playerControls.Touch.PrimaryContact.phase)) return;
+            if (verbose) Debug.Log(playerControls.Touch.PrimaryContact.phase);
+            EndPrimaryTouch(Time.time);
+        }
+    }
+
     private void PerformedPrimaryTouch(InputAction.CallbackContext ctx)
     {
-        if (ctx.phase == InputActionPhase.Waiting ||
-            ctx.phase == InputActionPhase.Started ||
-            ctx.phase == InputActionPhase.Performed)
-            return;
+        if (normalActions.Contains(ctx.phase)) return;
+        if (verbose) Debug.Log("[InputManager]: " + ctx.phase);
         EndPrimaryTouch(ctx);
     }
 
@@ -47,15 +59,22 @@ public class InputManager : Singleton<InputManager>
 
     private void StartPrimaryTouch(InputAction.CallbackContext ctx)
     {
+        primaryTouching = true;
         if (OnStartTouch != null) OnStartTouch(PrimaryPosition(), (float)ctx.startTime);
     }
     private void EndPrimaryTouch(InputAction.CallbackContext ctx)
     {
-        if (OnEndTouch != null) OnEndTouch(PrimaryPosition(), (float)ctx.time);
+        EndPrimaryTouch((float)ctx.time);
+    }
+    private void EndPrimaryTouch(float time)
+    {
+        primaryTouching = false;
+        if (OnEndTouch != null) OnEndTouch(PrimaryPosition(), time);
     }
 
     public Vector2 PrimaryPosition()
     {
+        //if(verbose) Debug.Log("[InputManager]: PrimaryPosition ");
         return Vector2Utils.ScreenToWorld(cam, playerControls.Touch.PrimaryPosition.ReadValue<Vector2>());
     }
 
