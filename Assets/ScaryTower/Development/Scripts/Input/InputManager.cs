@@ -43,6 +43,7 @@ public class InputManager : Singleton<InputManager>
 
     private void PerformedPrimaryTouch(InputAction.CallbackContext ctx)
     {
+        if(!Application.isFocused) return;
         if (normalActions.Contains(ctx.phase)) return;
         if (verbose) Debug.Log("[InputManager]: " + ctx.phase);
         EndPrimaryTouch(ctx);
@@ -59,6 +60,7 @@ public class InputManager : Singleton<InputManager>
 
     private void StartPrimaryTouch(InputAction.CallbackContext ctx)
     {
+        if(!Application.isFocused) return;
         primaryTouching = true;
         if (OnStartTouch != null) OnStartTouch(PrimaryPosition(), (float)ctx.startTime);
     }
@@ -68,6 +70,7 @@ public class InputManager : Singleton<InputManager>
     }
     private void EndPrimaryTouch(float time)
     {
+        if(!Application.isFocused) return;
         primaryTouching = false;
         if (OnEndTouch != null) OnEndTouch(PrimaryPosition(), time);
     }

@@ -98,7 +98,7 @@ public class HorizontalMove : MonoBehaviour
 			// add inertia as soon as it starts going to the nearest track
 			else if (movementCaptureTime == 0)
 			{
-				inertia = Mathf.Clamp((transform.localPosition - prevPos).x * -100f, -1f, 1f);
+				inertia = Mathf.Clamp((transform.localPosition - prevPos).x * -1000f, -1f, 1f);
 				if (verbose) Debug.Log("[HorizontalMove]: set inertia to " + inertia);
             }
 			// apply inertia to position until it's smaller than snap value
@@ -180,7 +180,7 @@ public class HorizontalMove : MonoBehaviour
 		if (insideBoundaries(pos.x))
 		{
 			transform.localPosition = pos;
-            if (verbose) Debug.Log("[HorizontalMove]: shift to " + prevPos.ToString());
+            //if (verbose) Debug.Log("[HorizontalMove]: shift to " + prevPos.ToString());
         }
 		else if (IsInTheMiddle && !bPositionCanChange)
 		{
