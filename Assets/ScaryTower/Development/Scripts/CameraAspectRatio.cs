@@ -33,7 +33,7 @@ public class CameraAspectRatio : STMonoBehaviour
         resizeCamera(this.gameObject, aspectRatio);
         relocateCamera();
         if (verbose) Debug.Log("[CameraAspectRatio]: changed to " + aspectRatio);
-		aspectRatioChanged.Invoke();
+		aspectRatioChanged?.Invoke();
     }
 
     string findAspectRatio ()

@@ -19,7 +19,8 @@ public enum STState
     // highscore ?
 }
 
-public class GameManager : MonoBehaviour
+[DefaultExecutionOrder(-2)]
+public class GameManager : STMonoBehaviour
 {
     [SerializeField] STMonoBehaviour cameraAspectRatio;
     [SerializeField] STMonoBehaviour setPlayerPosFromCameraAspectRatio;
@@ -27,35 +28,45 @@ public class GameManager : MonoBehaviour
     [SerializeField] STMonoBehaviour bgManager;
     [SerializeField] STMonoBehaviour horizontalMove;
 
-    //Game Movement Speed Two-step Formula
+    // Game Movement Speed Two-step Formula
+    // Visualized in https://www.geogebra.org/graphing/m647vgmh
     private const float K = 0.2f;
     private const float AMPLITUDE = 0.7f; // amplitude of each step
     private const float B = 200f;
     private const float E = 1.15f;//2.718f;//Number E (Euler's)
     private const float SHIFT = 0.5f; // starting speed
     private const float STEP = 0.999999f;
-    private bool step = false;
-    private float SHIFT2;
-    //private int counter = 0;//work as a clock, the variable 't' in the formula
-    private double stopwatch = 0;//work as a clock, the variable 't' in the formula
 
-    private STState state = STState.Playing; // todo: UI Flow
     private LogType logType;
 
-    void Start()
+    private void Start()
     {
+        Init();
+    }
+
+    public override void Init()
+    {
+        base.Init();
+
         logType = Debug.unityLogger.filterLogType;
-        Debug.unityLogger.filterLogType = GameConfigManager.Instance.gameSettings.logType;
+        Debug.unityLogger.filterLogType = Settings.logType;
 
         // todo: load info using a neat boostrap plugin or equivalent
-        MainScript.gameSpeed = GameConfigManager.Instance.gameSettings.startingSpeed;
-        stopwatch = 0;
+        GameConfigManager.Instance.gameRuntime = Resources.Load<STRuntime>("Runtime/STRuntime");
+        ResetRuntime();
 
         cameraAspectRatio.Init();
         //setPlayerPosFromCameraAspectRatio.Init();
         player.Init();
         bgManager.Init();
         //horizontalMove.Init();
+    }
+
+    private void ResetRuntime()
+    {
+        Runtime.gameSpeed = Settings.startingSpeed;
+        Runtime.stopwatch = 0;
+        Runtime.step = false;
     }
 
     void Update()
@@ -67,36 +78,35 @@ public class GameManager : MonoBehaviour
 
     private void GameMovementSpeed()
     {
-        if (Time.timeScale > 0 && state == STState.Playing)
+        if (Time.timeScale > 0 && Runtime.state == STState.Playing)
         {
-            if (step)
+            if (Runtime.step) // second step
             {
-                MainScript.gameSpeed = (float)System.Math.Round(SHIFT2 + (AMPLITUDE / (1 + (B * Mathf.Pow((E), (-K * (float)stopwatch))))), 8);
-                MainScript.enemySpacing = MainScript.gameSpeed;
+                Runtime.gameSpeed = (float)System.Math.Round(Runtime.SHIFT2 + (AMPLITUDE / (1 + (B * Mathf.Pow((E), (-K * (float)Runtime.stopwatch))))), 8);
+                //Runtime.enemySpacing = Runtime.gameSpeed;
             }
-            else
+            else // first step
             {
-                MainScript.gameSpeed = (float)System.Math.Round(SHIFT + (AMPLITUDE / (1 + (B * Mathf.Pow((E), (-K * (float)stopwatch))))), 8);
-                MainScript.enemySpacing = MainScript.gameSpeed;
+                Runtime.gameSpeed = (float)System.Math.Round(SHIFT + (AMPLITUDE / (1 + (B * Mathf.Pow((E), (-K * (float)Runtime.stopwatch))))), 8);
+                //Runtime.enemySpacing = Runtime.gameSpeed;
             }
 
             //counter++;
-            stopwatch += Time.deltaTime;
+            Runtime.stopwatch += Time.deltaTime;
         }
-        if (!step)
+        if (!Runtime.step)
         {
-            if (MainScript.gameSpeed > (SHIFT + AMPLITUDE) * STEP)
+            if (Runtime.gameSpeed > (SHIFT + AMPLITUDE) * STEP)
             {
-                step = true;
+                Runtime.step = true;
                 //counter = 0;
-                stopwatch = 0;
-                SHIFT2 = MainScript.gameSpeed;
+                Runtime.stopwatch = 0;
+                Runtime.SHIFT2 = Runtime.gameSpeed;
             }
         }
-        GameConfigManager.Instance.gameSettings.startingSpeed = MainScript.gameSpeed;
     }
 
-    private void OnDestroy()
+    public override void Discard()
     {
         // restore logtype set in the editor
         Debug.unityLogger.filterLogType = logType;

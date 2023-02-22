@@ -15,4 +15,5 @@ public class STSettings
 public class GameConfigManager : Singleton<GameConfigManager>
 {
     public STSettings gameSettings;
+    public STRuntime gameRuntime;
 }

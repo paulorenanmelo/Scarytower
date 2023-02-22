@@ -9,6 +9,8 @@ public abstract class STMonoBehaviour : MonoBehaviour
     public delegate void AspectRatioChangedDelegate();
     public static AspectRatioChangedDelegate aspectRatioChanged;
     protected bool verbose => GameConfigManager.Instance.gameSettings.logVerbose;
+    protected STRuntime Runtime => GameConfigManager.Instance.gameRuntime;
+    protected STSettings Settings => GameConfigManager.Instance.gameSettings;
 
     /// <summary>
     /// Use this to run logic that should only happen whan the aspect ratio is changed.<br></br>

@@ -35,8 +35,8 @@ public class BgManager : STMonoBehaviour {
     private int loopCount = 0;
 
     public enum StatusUpdate { Idle, Loop_Positive, Loop_Negative, SwapNext, SwapPrevious }
-    
-    private float speed => GameConfigManager.Instance.gameSettings.startingSpeed;
+
+    private float speed => Runtime.gameSpeed;// Settings.startingSpeed;
     private Texture Tex1 { get => texSets[texSet].tex[texID + 0]; set { texSets[texSet].tex[texID + 0] = value; } }
     private Texture Tex2 { get => texSets[texSet].tex[texID + 1]; set { texSets[texSet].tex[texID + 1] = value; } }
     private Texture Tex3 { get => texSets[texSet].tex[texID + 2]; set { texSets[texSet].tex[texID + 2] = value; } }
