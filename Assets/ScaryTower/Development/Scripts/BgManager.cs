@@ -198,9 +198,10 @@ public class BgManager : STMonoBehaviour {
     }
 
     void Update () {
+        if (Runtime.state != STState.Playing) return;
+
         // set value from previous update loop
         mat.SetFloat("_CurrVal", currVal);
-
         UpdateCurrVal();
 
         UpdateTextures();
