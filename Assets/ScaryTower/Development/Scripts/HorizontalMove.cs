@@ -4,7 +4,7 @@ using static FloatUtils;
 
 public class HorizontalMove : MonoBehaviour
 {
-	[Tooltip("How many seconds should the game wait after a touch to go to nearest track?\nThis is to prevent sudden jumps.")]
+	[Tooltip("How many seconds should the game delay after a touch to go to nearest track?\nThis is to prevent sudden jumps.")]
 	[SerializeField] private float minSecondsToMoveToTrack = 0.15f;
 
     private Touch touch;

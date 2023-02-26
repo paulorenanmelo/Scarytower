@@ -10,12 +10,17 @@ public enum STState
 {
     None = -1,
     Loading = 0,
-    StartMenu = 1,
-    Playing = 2,
-    Paused = 3,
-    LiftMenu = 4,
-    CharacterMenu = 5,
-    CreditsMenu = 6,
+    Intro = 1,
+    StartMenu = 2,
+    Playing = 3,
+    Paused = 4,
+    ShoppingMenu = 5,
+    LiftMenu = 6,
+    CharacterMenu = 7,
+    PowerupMenu = 8,
+    Mission = 9,
+    CreditsMenu = 10,
+    GameOver = 11
     // highscore ?
 }
 
