@@ -15,4 +15,5 @@ public class STRuntime : ScriptableObject
     /// Set this in order to transition to a different state, and set it to None when finished transitioning
     /// </summary>
     public STState goToState = STState.Playing;
+    public Inventory inventory;
 }

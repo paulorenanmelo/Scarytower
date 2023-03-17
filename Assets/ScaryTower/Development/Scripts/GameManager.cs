@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Profiling;
 //using UnityEditorInternal.VersionControl;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public enum STState
@@ -18,7 +19,7 @@ public enum STState
     LiftMenu = 6,
     CharacterMenu = 7,
     PowerupMenu = 8,
-    Mission = 9,
+    MissionMenu = 9,
     CreditsMenu = 10,
     GameOver = 11
     // highscore ?
@@ -60,10 +61,10 @@ public class GameManager : STMonoBehaviour
         GameConfigManager.Instance.gameRuntime = Resources.Load<STRuntime>("Runtime/STRuntime");
         ResetRuntime();
 
-        cameraAspectRatio.Init();
+        if (cameraAspectRatio) cameraAspectRatio.Init();
         //setPlayerPosFromCameraAspectRatio.Init();
-        player.Init();
-        bgManager.Init();
+        if(player) player.Init();
+        if(bgManager) bgManager.Init();
         //horizontalMove.Init();
     }
 
@@ -72,6 +73,21 @@ public class GameManager : STMonoBehaviour
         Runtime.gameSpeed = Settings.startingSpeed;
         Runtime.stopwatch = 0;
         Runtime.step = false;
+        if(SceneManager.GetActiveScene().name == "Menu")
+        {
+            Runtime.state = STState.None;
+            Runtime.goToState = STState.None;
+            if (PlayerPrefs.HasKey("Intro") && PlayerPrefs.GetInt("Intro") == 0)
+                Runtime.goToState = STState.StartMenu;
+            else
+                Runtime.goToState = STState.Intro;
+        }
+        else
+        {
+            var p = player as Player;
+            p.character = Runtime.inventory.character;
+            p.elevator = Runtime.inventory.elevator;
+        }
     }
 
     void Update()

@@ -16,12 +16,19 @@ public class Intro : MonoBehaviour
         Sequence seq = DOTween.Sequence();
         for (int i = 0; i < element.Length; i++)
         {
-            seq.Append(element[i].cg.DOFade(0f, fadeDuration).SetDelay(element[i].delay));
+            seq.AppendInterval(element[i].delay);
+            seq.Append(element[i].cg.DOFade(0f, fadeDuration));
             if(i < element.Length - 1)
             {
                 seq.Append(element[i + 1].cg.DOFade(1f, fadeDuration));
             }
         }
+        seq.OnComplete(OnFinishedSequence);
+    }
+
+    private void OnFinishedSequence()
+    {
+        PlayerPrefs.SetInt("Intro", 0);
     }
 
     private void OnDisable()

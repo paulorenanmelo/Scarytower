@@ -78,6 +78,7 @@ public class InputManager : Singleton<InputManager>
     public Vector2 PrimaryPosition()
     {
         //if(verbose) Debug.Log("[InputManager]: PrimaryPosition ");
+        if(cam == null) cam = Camera.main;
         return Vector2Utils.ScreenToWorld(cam, playerControls.Touch.PrimaryPosition.ReadValue<Vector2>());
     }
 

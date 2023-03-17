@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class Back : MonoBehaviour {
 	
@@ -15,8 +16,14 @@ public class Back : MonoBehaviour {
         {
 			if (quit)
 				Application.Quit();
-    		else
-				Application.LoadLevel("menu");
+    		else if(SceneManager.GetActiveScene().name != "Menu")
+			{
+				SceneManager.LoadScene("Menu");
+			}
+			else
+			{
+				GameConfigManager.Instance.gameRuntime.goToState = STState.StartMenu;
+			}
         }
 	}
 }
